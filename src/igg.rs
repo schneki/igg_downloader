@@ -2,10 +2,37 @@ use select::document::Document;
 use select::predicate::{Class, Name};
 
 use util;
+use drive;
 
 pub struct Game {
     name: String,
     url: String
+}
+
+pub fn download_game(game_url: &str, tx: ::std::sync::mpsc::Sender<String>) -> Result<String, String> {
+    if !game_url.contains("http://igg-games.com/") { 
+        println!("Not an igg games url");
+        return Err("Not an igg games url".into()) 
+    }
+
+    let drive_urls = get_drive_urls(game_url);
+
+    for i in 0..drive_urls.len() {
+        tx.send(format!("Downloading part {} from {}", i+1, drive_urls.len()));
+
+        let _ = match drive::download(&drive_urls[i]) {
+           Ok(name) => {
+               tx.send(format!("Finished Downloading part {} from {}", i+1, drive_urls.len())).unwrap();
+           },
+           Err(msg) => {
+               tx.send(format!("Downloading part {} from {} has failed", i+1, drive_urls.len())).unwrap();
+               return Err("download failed".into());
+           },
+        };
+    }
+
+    Ok("".into())
+
 }
 
 pub fn search_game(game: &str) -> Vec<Game> {

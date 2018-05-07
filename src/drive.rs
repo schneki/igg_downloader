@@ -4,21 +4,20 @@ use select::predicate::{Attr, Name, Class};
 use hyper::Uri;
 use hyper::header::Cookie;
 
-use std::io::Write;
-use std::fs::File;
 
-pub fn download(drive_url: &str) {
-    let (url, name) = to_confirm_url(drive_url);
+pub fn download(drive_url: &str) -> Result<String, String> {
+    let (url, name) = try!(to_confirm_url(drive_url));
     util::download_file(&url, &name);
-
-    println!("{} downloaded", name);
-
+    Ok(name)
 }
 
-pub fn to_confirm_url(drive_url: &str) -> (String, String) {
+pub fn to_confirm_url(drive_url: &str) -> Result<(String, String), String> {
     let (cookies, content) = util::get_url_content_https_with_cookies(drive_url, Cookie::new());
     let document = Document::from(content.as_str());
-    let size = document.find(Class("uc-name-size")).next().unwrap().text();
+    let size = match document.find(Class("uc-name-size")).next() {
+        Some(size) => size.text(),
+        None => return Err("not found".into())
+    };
     let name = document
         .find(Class("uc-name-size")).next().unwrap()
         .find(Name("a")).next().unwrap().text();
@@ -38,6 +37,6 @@ pub fn to_confirm_url(drive_url: &str) -> (String, String) {
         .split(">here").collect::<Vec<&str>>()[0]
         .replace('"', "");
 
-    (final_url, name)
+    Ok((final_url, name))
 
 }

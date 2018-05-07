@@ -3,8 +3,7 @@ use futures::future::Future;
 use futures::Stream;
 use tokio_core::reactor::Core;
 use hyper_tls::HttpsConnector;
-use hyper::header::Headers;
-use hyper::header::{SetCookie, Cookie, Raw};
+use hyper::header::{SetCookie, Cookie};
 
 pub fn get_url_content(url: &str) -> String {
     let uri = url.parse::<Uri>().unwrap();
@@ -83,23 +82,4 @@ pub fn get_url_content_https_with_cookies(url: &str, cookie: Cookie) -> (Cookie,
         })
     });
     core.run(work).unwrap()
-}
-
-fn get_cookies(resp: &::hyper::client::Response) -> Cookie {
-    let cookies: Vec<(String, String)> 
-     = if let Some(&SetCookie (ref cookies)) = resp.headers().get() {
-        cookies.iter().map(|c| {
-            let prev = c.split_at(c.find("=").unwrap());
-            let aft = prev.1.split_at(prev.1.find(";").unwrap())
-                .0.split_at(1);
-
-            (prev.0.into(),aft.1.into())
-        }).collect()
-    } else { Vec::new() };
-    
-    let mut cookie_header = Cookie::new();
-    for c in cookies {
-        cookie_header.append(c.0, c.1);
-    }
-    cookie_header
 }
