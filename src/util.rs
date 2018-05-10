@@ -36,7 +36,10 @@ pub fn get_url_content_https(url: &str) -> String {
 use std::fs::File;
 use std::io::Write;
 
-pub fn download_file(url: &str, name: &str) {
+use gui::Status;
+use std::sync::mpsc::Sender;
+
+pub fn download_file(url: &str, name: &str, size: usize,  tx: &Sender<Status>) {
     let uri = url.parse::<Uri>().unwrap();
     let mut core = Core::new().unwrap();
     let client = Client::configure()
@@ -45,8 +48,18 @@ pub fn download_file(url: &str, name: &str) {
 
     let mut f = File::create(&name).unwrap();
 
+    let mut byte_counter = 0;
+    let mut total = 0;
+    let interval = 1_000_000;
+
     let work = client.get(uri).and_then(|resp| {
         resp.body().for_each(|chunk| {
+            byte_counter += chunk.len();
+            if byte_counter > interval {
+                total += byte_counter;
+                tx.send(Status::Progress(total/interval, size)).unwrap();
+                byte_counter = 0; 
+            }
             f.write_all(&chunk).unwrap();
             Ok(())
         })

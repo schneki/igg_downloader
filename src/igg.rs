@@ -9,29 +9,29 @@ pub struct Game {
     url: String
 }
 
-pub fn download_game(game_url: &str, tx: ::std::sync::mpsc::Sender<String>) -> Result<String, String> {
+use std::sync::mpsc::Sender;
+
+
+pub fn download_game(game_url: &str, tx: &Sender<::gui::Status>) {
     if !game_url.contains("http://igg-games.com/") { 
-        println!("Not an igg games url");
-        return Err("Not an igg games url".into()) 
+        tx.send(::gui::Status::InvalidURL).unwrap();
+        return;
     }
 
-    let drive_urls = get_drive_urls(game_url);
+    let drive_urls = get_drive_urls(&game_url);
 
     for i in 0..drive_urls.len() {
-        tx.send(format!("Downloading part {} from {}", i+1, drive_urls.len()));
+        tx.send(::gui::Status::Value(i, drive_urls.len())).unwrap();
 
-        let _ = match drive::download(&drive_urls[i]) {
+        let _ = match drive::download(&drive_urls[i], &tx) {
            Ok(name) => {
-               tx.send(format!("Finished Downloading part {} from {}", i+1, drive_urls.len())).unwrap();
+               
            },
            Err(msg) => {
-               tx.send(format!("Downloading part {} from {} has failed", i+1, drive_urls.len())).unwrap();
-               return Err("download failed".into());
            },
         };
     }
-
-    Ok("".into())
+        tx.send(::gui::Status::Finished).unwrap();
 
 }
 
