@@ -109,9 +109,9 @@ fn gui_always_active(ui: &mut conrod::UiCell, ids: &Ids, app: &mut App, tx: Arc<
 
     for _press in widget::Button::new()
         .label("Download")
-        .mid_left_with_margin_on(ids.canvas, MARGIN)
+        .mid_top_of(ids.canvas)
         .down_from(ids.text_edit_game_url, 60.0)
-        .w_h(side, side)
+        .w_h(100.0, 40.0)
         .set(ids.button_download, ui)
     {
         if !app.locked {
@@ -192,7 +192,7 @@ pub fn show() {
     let ids = Ids::new(ui.widget_id_generator());
 
     // Load font from file
-    let font_buffer = include_bytes!("../assets/fonts/NotoSans/NotoSans-Regular.ttf").to_vec();
+    let font_buffer = include_bytes!("../assets/NotoSans-Regular.ttf").to_vec();
     ui.fonts.insert(Font::from_bytes(font_buffer).unwrap());
 
     let mut image_map = conrod::image::Map::new();

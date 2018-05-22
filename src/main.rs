@@ -22,6 +22,7 @@ extern crate rusttype;
 extern crate clipboard;
 
 mod igg;
+mod megaup;
 mod drive;
 mod util;
 mod gui;
